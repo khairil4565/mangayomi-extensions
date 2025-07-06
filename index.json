@@ -1,10 +1,25 @@
 [
-  {
-    "name": "Novelfull",
-    "pkg": "en.novelfull",
-    "lang": "en",
-    "version": "1.0.0",
-    "url": "https://khairil4565.github.io/mangayomi-extensions/novelfull.en-v1.0.0.zip",
-    "nsfw": false
-  }
+{
+  "name": "Novelfull",
+  "id": 990001001,
+  "baseUrl": "https://novelfull.com",
+  "lang": "en",
+  "typeSource": "single",
+  "iconUrl": "https://novelfull.com/favicon.ico",
+  "dateFormat": "",
+  "dateFormatLocale": "",
+  "isNsfw": false,
+  "hasCloudflare": true,
+  "sourceCodeUrl": "https://khairil4565.github.io/mangayomi-extensions/novelfull/novelfull.js",
+  "apiUrl": "",
+  "version": "1.0.0",
+  "isManga": false,
+  "itemType": 2,
+  "isFullData": false,
+  "appMinVerReq": "0.5.0",
+  "additionalParams": "",
+  "sourceCodeLanguage": 1,
+  "notes": "This is an unofficial Novelfull extension written in JS format."
+}
 ]
+  
