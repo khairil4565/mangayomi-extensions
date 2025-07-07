@@ -6,7 +6,7 @@ const mangayomiSources = [{
   "iconUrl": "https://readnovelfull.com/favicon.ico",
   "typeSource": "single",
   "itemType": 2,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "dateFormat": "",
   "dateFormatLocale": "",
   "pkgPath": "novel/src/en/readnovelfull.js",
@@ -21,17 +21,17 @@ class DefaultExtension extends MProvider {
     const elements = doc.select("div.list-novel .row");
 
     for (const el of elements) {
-      const name = el.selectFirst("h3.novel-title > a")?.text.trim();
-      const link = el.selectFirst("h3.novel-title > a")?.getHref();
-      let imageUrl = el.selectFirst("img")?.getAttribute("data-src") || el.selectFirst("img")?.getSrc();
+      const titleEl = el.selectFirst("h3.novel-title > a");
+      const imgEl = el.selectFirst("img");
+      if (!titleEl || !imgEl) continue;
 
-      if (link && name) {
-        novels.push({
-          name,
-          link: "https://readnovelfull.com" + link,
-          imageUrl: imageUrl?.startsWith("http") ? imageUrl : "https://readnovelfull.com" + imageUrl
-        });
-      }
+      const name = titleEl.text.trim();
+      const link = "https://readnovelfull.com" + titleEl.getHref();
+      const imageUrl = imgEl.getAttribute("data-src")?.startsWith("http")
+        ? imgEl.getAttribute("data-src")
+        : "https://readnovelfull.com" + imgEl.getAttribute("data-src");
+
+      novels.push({ name, link, imageUrl });
     }
 
     const hasNextPage = doc.selectFirst(".pagination > li.active + li") !== null;
@@ -69,10 +69,10 @@ class DefaultExtension extends MProvider {
     const chapterElements = doc.select("#tab-chapters .list-chapter > li > a");
     for (const el of chapterElements.reverse()) {
       const name = el.text.trim();
-      const link = el.getHref();
+      const link = "https://readnovelfull.com" + el.getHref();
       chapters.push({
         name,
-        url: "https://readnovelfull.com" + link,
+        url: link,
         dateUpload: null,
         scanlator: null
       });
