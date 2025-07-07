@@ -41,17 +41,17 @@ class DefaultExtension extends MProvider {
 
   async getPopular(page) {
     const res = await new Client().get(`https://novelfull.com/most-popular?page=${page}`);
-    return this.mangaListFromPage(res);
+    return this.mangaListFromPage.call(this, res);
   }
 
   async getLatestUpdates(page) {
     const res = await new Client().get(`https://novelfull.com/latest-release?page=${page}`);
-    return this.mangaListFromPage(res);
+    return this.mangaListFromPage.call(this, res);
   }
 
   async search(query, page, filters) {
     const res = await new Client().get(`https://novelfull.com/search?keyword=${encodeURIComponent(query)}&page=${page}`);
-    return this.mangaListFromPage(res);
+    return this.mangaListFromPage.call(this, res);
   }
 
   async getDetail(url) {
