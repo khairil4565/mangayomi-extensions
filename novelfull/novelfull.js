@@ -6,7 +6,7 @@ const mangayomiSources = [{
   "iconUrl": "https://novelfull.com/favicon.ico",
   "typeSource": "single",
   "itemType": 2,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "dateFormat": "",
   "dateFormatLocale": "",
   "pkgPath": "novel/src/en/novelfull.js",
@@ -69,6 +69,9 @@ class DefaultExtension extends MProvider {
     const novelId = doc.selectFirst("#rating")?.getAttribute("data-novel-id");
     const chapters = [];
 
+    let chapterElements = [];
+
+    // ✅ Fallback to AJAX or Static HTML
     if (novelId) {
       const chapterRes = await client.post("https://novelfull.com/ajax/chapter-archive", {
         headers: {
@@ -79,17 +82,23 @@ class DefaultExtension extends MProvider {
       });
 
       const chapterDoc = new Document(chapterRes.body);
-      const chapterElements = chapterDoc.select("ul.list-chapter > li > a");
-      for (const el of chapterElements) {
-        const name = el.text.trim();
-        const link = el.getHref;
-        chapters.push({
-          name,
-          url: "https://novelfull.com" + link,
-          dateUpload: null,
-          scanlator: null
-        });
-      }
+      chapterElements = chapterDoc.select("ul.list-chapter > li > a");
+    }
+
+    // Fallback to static HTML if chapter-archive failed
+    if (chapterElements.length === 0) {
+      chapterElements = doc.select("ul.list-chapter > li > a");
+    }
+
+    for (const el of chapterElements) {
+      const name = el.text.trim();
+      const link = el.getHref;
+      chapters.push({
+        name,
+        url: "https://novelfull.com" + link,
+        dateUpload: null,
+        scanlator: null
+      });
     }
 
     return {
