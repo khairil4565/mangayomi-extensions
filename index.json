@@ -43,17 +43,26 @@
     "sourceCodeLanguage": 1,
     "notes": "Read novels from readnovelfull.com"
   },
-  {
+      {
         "name": "AllNovelFull",
-        "id": "allnovelfull",
-        "version": 1,
+        "id": 127817281,
+        "baseUrl": "https://allnovelfull.com",
         "lang": "en",
-        "sourceType": "novel",
-        "sourcePath": "https://khairil4565.github.io/mangayomi-extensions/allnovelfull/allnovelfull.js",
-        "icon": "icon.png",
-        "nsfw": false,
-        "description": "Extension for reading novels from allnovelfull.com",
-        "author": "Your Name",
-        "baseUrl": "https://allnovelfull.com"
+        "typeSource": "single",
+        "iconUrl": "https://khairil4565.github.io/mangayomi-extensions/allnovelfull/icon.png",
+        "dateFormat": "",
+        "dateFormatLocale": "",
+        "isNsfw": false,
+        "hasCloudflare": false,
+        "sourceCodeUrl": "https://khairil4565.github.io/mangayomi-extensions/allnovelfull/allnovelfull.js",
+        "apiUrl": "",
+        "version": "1.0.0",
+        "isManga": false,
+        "itemType": 2,
+        "isFullData": false,
+        "appMinVerReq": "0.5.0",
+        "additionalParams": "",
+        "sourceCodeLanguage": 1,
+        "notes": "Extension for reading novels from allnovelfull.com",
     }
 ]
