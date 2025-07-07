@@ -21,11 +21,11 @@ class DefaultExtension extends MProvider {
     const elements = doc.select(".list-truyen .row");
 
     for (const el of elements) {
-      const name = el.selectFirst("h3.truyen-title > a")?.text?.trim();
-      const link = el.selectFirst("h3.truyen-title > a")?.getHref();
-      
+      const name = el.selectFirst("h3.truyen-title > a")?.text.trim();
+      const link = el.selectFirst("h3.truyen-title > a")?.getHref;
+
       const imageEl = el.selectFirst("img");
-      let imageUrl = imageEl?.getAttribute("data-src") || imageEl?.getSrc();
+      let imageUrl = imageEl?.getAttribute("data-src") || imageEl?.getSrc;
       if (imageUrl?.startsWith("/")) {
         imageUrl = "https://novelfull.com" + imageUrl;
       }
@@ -41,17 +41,17 @@ class DefaultExtension extends MProvider {
 
   async getPopular(page) {
     const res = await new Client().get(`https://novelfull.com/most-popular?page=${page}`);
-    return this.mangaListFromPage.call(this, res);
+    return this.mangaListFromPage(res);
   }
 
   async getLatestUpdates(page) {
     const res = await new Client().get(`https://novelfull.com/latest-release?page=${page}`);
-    return this.mangaListFromPage.call(this, res);
+    return this.mangaListFromPage(res);
   }
 
   async search(query, page, filters) {
     const res = await new Client().get(`https://novelfull.com/search?keyword=${encodeURIComponent(query)}&page=${page}`);
-    return this.mangaListFromPage.call(this, res);
+    return this.mangaListFromPage(res);
   }
 
   async getDetail(url) {
@@ -59,11 +59,11 @@ class DefaultExtension extends MProvider {
     const res = await client.get(url);
     const doc = new Document(res.body);
 
-    const imageUrl = doc.selectFirst(".book img")?.getSrc();
-    const description = doc.selectFirst(".desc-text")?.text?.trim();
-    const author = doc.selectFirst("a[property='author']")?.text?.trim();
-    const genre = doc.select("a[itemprop='genre']").map((el) => el.text?.trim());
-    const statusText = doc.selectFirst(".info > div")?.text?.toLowerCase();
+    const imageUrl = doc.selectFirst(".book img")?.getSrc;
+    const description = doc.selectFirst(".desc-text")?.text.trim();
+    const author = doc.selectFirst("a[property='author']")?.text.trim();
+    const genre = doc.select("a[itemprop='genre']").map((el) => el.text.trim());
+    const statusText = doc.selectFirst(".info > div")?.text.toLowerCase();
     const status = statusText?.includes("ongoing") ? 0 : statusText?.includes("completed") ? 1 : 2;
 
     const novelId = doc.selectFirst("#rating")?.getAttribute("data-novel-id");
@@ -81,8 +81,8 @@ class DefaultExtension extends MProvider {
       const chapterDoc = new Document(chapterRes.body);
       const chapterElements = chapterDoc.select("ul.list-chapter > li > a");
       for (const el of chapterElements) {
-        const name = el.text?.trim();
-        const link = el.getHref();
+        const name = el.text.trim();
+        const link = el.getHref;
         chapters.push({
           name,
           url: "https://novelfull.com" + link,
@@ -110,7 +110,7 @@ class DefaultExtension extends MProvider {
 
   async cleanHtmlContent(html) {
     const doc = new Document(html);
-    const title = doc.selectFirst("h2")?.text?.trim() || "";
+    const title = doc.selectFirst("h2")?.text.trim() || "";
     const content = doc.selectFirst(".chapter-c")?.innerHtml;
     return `<h2>${title}</h2><hr><br>${content}`;
   }
