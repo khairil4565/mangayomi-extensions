@@ -6,7 +6,7 @@ const mangayomiSources = [{
   "iconUrl": "https://novelfull.com/favicon.ico",
   "typeSource": "single",
   "itemType": 2,
-  "version": "1.0.1",
+  "version": "1.0.2",
   "dateFormat": "",
   "dateFormatLocale": "",
   "pkgPath": "novel/src/en/novelfull.js",
@@ -16,24 +16,24 @@ const mangayomiSources = [{
 
 class DefaultExtension extends MProvider {
   mangaListFromPage(res) {
-  const doc = new Document(res.body);
-  const novels = [];
-  const elements = doc.select(".list-truyen .row");
-  for (const el of elements) {
-    const name = el.selectFirst("h3.truyen-title > a")?.text.trim();
-    const link = el.selectFirst("h3.truyen-title > a")?.getHref;
-    const imageEl = el.selectFirst("img");
-    let imageUrl = "";
-    if (imageEl) {
-      imageUrl = imageEl.getSrc || imageEl.attr("data-src") || imageEl.attr("data-image") || "";
+    const doc = new Document(res.body);
+    const novels = [];
+    const elements = doc.select(".list-truyen .row");
+    for (const el of elements) {
+      const name = el.selectFirst("h3.truyen-title > a")?.text.trim();
+      const link = el.selectFirst("h3.truyen-title > a")?.getHref;
+      const imageEl = el.selectFirst("img");
+      let imageUrl = "";
+      if (imageEl) {
+        imageUrl = imageEl.attr("data-src") || imageEl.getSrc || "";
+      }
+      if (name && link) {
+        novels.push({ name, link: "https://novelfull.com" + link, imageUrl });
+      }
     }
-    if (name && link) {
-      novels.push({ name, link: "https://novelfull.com" + link, imageUrl });
-    }
+    const hasNextPage = doc.selectFirst("ul.pagination > li.active + li") !== null;
+    return { list: novels, hasNextPage };
   }
-  const hasNextPage = doc.selectFirst("ul.pagination > li.active + li") !== null;
-  return { list: novels, hasNextPage };
-}
 
   async getPopular(page) {
     const res = await new Client().get(`https://novelfull.com/most-popular?page=${page}`);
@@ -54,7 +54,7 @@ class DefaultExtension extends MProvider {
     const client = new Client();
     const res = await client.get(url);
     const doc = new Document(res.body);
-    const imageUrl = doc.selectFirst(".book img")?.getSrc;
+    const imageUrl = doc.selectFirst(".book img")?.attr("data-src") || "";
     const description = doc.selectFirst(".desc-text")?.text.trim();
     const author = doc.selectFirst("a[property='author']")?.text.trim();
     const genre = doc.select("a[itemprop='genre']").map((el) => el.text.trim());
@@ -67,12 +67,14 @@ class DefaultExtension extends MProvider {
     for (const el of chapterElements) {
       const name = el.selectFirst("a")?.text.trim();
       const link = el.selectFirst("a")?.getHref;
-      chapters.push({
-        name,
-        url: "https://novelfull.com" + link,
-        dateUpload: null,
-        scanlator: null
-      });
+      if (name && link) {
+        chapters.push({
+          name,
+          url: "https://novelfull.com" + link,
+          dateUpload: null,
+          scanlator: null
+        });
+      }
     }
 
     return {
