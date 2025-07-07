@@ -22,8 +22,11 @@ class DefaultExtension extends MProvider {
   for (const el of elements) {
     const name = el.selectFirst("h3.truyen-title > a")?.text.trim();
     const link = el.selectFirst("h3.truyen-title > a")?.getHref;
-    const imageTag = el.selectFirst("img");
-    const imageUrl = imageTag?.getAttribute("data-image") || imageTag?.getAttribute("src") || "";
+    const imageEl = el.selectFirst("img");
+    let imageUrl = "";
+    if (imageEl) {
+      imageUrl = imageEl.getSrc || imageEl.attr("data-src") || imageEl.attr("data-image") || "";
+    }
     if (name && link) {
       novels.push({ name, link: "https://novelfull.com" + link, imageUrl });
     }
