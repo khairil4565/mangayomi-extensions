@@ -6,7 +6,7 @@ const mangayomiSources = [{
   "iconUrl": "https://readnovelfull.com/favicon.ico",
   "typeSource": "single",
   "itemType": 2,
-  "version": "1.0.1",
+  "version": "1.0.2",
   "dateFormat": "",
   "dateFormatLocale": "",
   "pkgPath": "novel/src/en/readnovelfull.js",
@@ -23,13 +23,13 @@ class DefaultExtension extends MProvider {
     for (const el of elements) {
       const titleEl = el.selectFirst("h3.novel-title > a");
       const imgEl = el.selectFirst("img");
+
       if (!titleEl || !imgEl) continue;
 
-      const name = titleEl.text.trim();
+      const name = titleEl.getText().trim();
       const link = "https://readnovelfull.com" + titleEl.getHref();
-      const imageUrl = imgEl.getAttribute("data-src")?.startsWith("http")
-        ? imgEl.getAttribute("data-src")
-        : "https://readnovelfull.com" + imgEl.getAttribute("data-src");
+      const imgSrc = imgEl.hasAttr("data-src") ? imgEl.getAttribute("data-src") : imgEl.getSrc();
+      const imageUrl = imgSrc?.startsWith("http") ? imgSrc : "https://readnovelfull.com" + imgSrc;
 
       novels.push({ name, link, imageUrl });
     }
@@ -59,16 +59,17 @@ class DefaultExtension extends MProvider {
     const doc = new Document(res.body);
 
     const imageUrl = doc.selectFirst(".book img")?.getSrc();
-    const description = doc.selectFirst(".desc-text")?.text.trim();
-    const author = doc.selectFirst("a[property='author']")?.text.trim();
-    const genre = doc.select("a[itemprop='genre']").map((el) => el.text.trim());
-    const statusText = doc.selectFirst(".info > div")?.text.toLowerCase();
+    const description = doc.selectFirst(".desc-text")?.getText().trim();
+    const author = doc.selectFirst("a[property='author']")?.getText().trim();
+    const genreEls = doc.select("a[itemprop='genre']").toArray();
+    const genre = genreEls.map((el) => el.getText().trim());
+    const statusText = doc.selectFirst(".info > div")?.getText().toLowerCase();
     const status = statusText?.includes("ongoing") ? 0 : statusText?.includes("completed") ? 1 : 2;
 
     const chapters = [];
-    const chapterElements = doc.select("#tab-chapters .list-chapter > li > a");
-    for (const el of chapterElements.reverse()) {
-      const name = el.text.trim();
+    const chapterElements = doc.select("#tab-chapters .list-chapter > li > a").toArray().reverse();
+    for (const el of chapterElements) {
+      const name = el.getText().trim();
       const link = "https://readnovelfull.com" + el.getHref();
       chapters.push({
         name,
@@ -96,8 +97,8 @@ class DefaultExtension extends MProvider {
 
   async cleanHtmlContent(html) {
     const doc = new Document(html);
-    const title = doc.selectFirst("h2")?.text.trim() || "";
-    const content = doc.selectFirst(".chapter-c")?.innerHtml;
+    const title = doc.selectFirst("h2")?.getText().trim() || "";
+    const content = doc.selectFirst(".chapter-c")?.getInnerHtml();
     return `<h2>${title}</h2><hr><br>${content}`;
   }
 
