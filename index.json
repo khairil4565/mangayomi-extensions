@@ -42,5 +42,18 @@
     "additionalParams": "",
     "sourceCodeLanguage": 1,
     "notes": "Read novels from readnovelfull.com"
-  }
+  },
+  {
+        "name": "AllNovelFull",
+        "id": "allnovelfull",
+        "version": 1,
+        "lang": "en",
+        "sourceType": "novel",
+        "sourcePath": "https://khairil4565.github.io/mangayomi-extensions/allnovelfull/allnovelfull.js",
+        "icon": "icon.png",
+        "nsfw": false,
+        "description": "Extension for reading novels from allnovelfull.com",
+        "author": "Your Name",
+        "baseUrl": "https://allnovelfull.com"
+    }
 ]
