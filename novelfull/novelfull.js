@@ -6,7 +6,7 @@ const mangayomiSources = [{
   "iconUrl": "https://novelfull.com/favicon.ico",
   "typeSource": "single",
   "itemType": 2,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "dateFormat": "",
   "dateFormatLocale": "",
   "pkgPath": "novel/src/en/novelfull.js",
