@@ -6,7 +6,7 @@ const mangayomiSources = [{
   "iconUrl": "https://novelfull.com/favicon.ico",
   "typeSource": "single",
   "itemType": 2, // Novel type
-  "version": "1.0.8", // PENTING: Tingkatkan versi!
+  "version": "1.0.8", // PASTIKAN VERSION INI ADALAH 1.0.8
   "dateFormat": "",
   "dateFormatLocale": "",
   "pkgPath": "novel/src/en/novelfull.js", // Sahkan laluan ini
@@ -15,6 +15,12 @@ const mangayomiSources = [{
 }];
 
 class DefaultExtension extends MProvider {
+
+  getHeaders(url) {
+    // Fungsi ini biasanya tidak diperlukan jika headers ditentukan dalam setiap Client().get()
+    return {};
+  }
+
   mangaListFromPage(res) {
     console.log("--- DEBUG: mangaListFromPage Called (Version 1.0.8) ---");
     console.log("HTTP Response Status:", res.status);
@@ -31,16 +37,12 @@ class DefaultExtension extends MProvider {
     const doc = new Document(res.body);
     const novels = [];
 
-    // Guna selector yang lebih robust dan umum
-    // Kita akan cuba selector yang biasa digunakan untuk novel/manga list items
     let elements = doc.select(".list-truyen .row, .novel-list .item, .col-truyen-main .row, .novel-grid .novel-item"); 
     
     console.log("Found initial novel elements (any selector):", elements.length);
 
-    // Jika tiada elemen ditemui dengan selector di atas, logkan
     if (elements.length === 0) {
         console.warn("No main novel list elements found with common selectors. HTML might have changed.");
-        // Anda boleh tambah selector lain di sini jika tahu
     }
 
     for (const el of elements) {
@@ -48,53 +50,42 @@ class DefaultExtension extends MProvider {
       let link = "";
       let imageUrl = "";
 
-      // Cuba selector nama/link yang paling mungkin
-      // Pastikan nameEl wujud sebelum cuba dapatkan text atau href
       const nameEl = el.selectFirst("h3.truyen-title > a, .novel-title a, .title a, a.text-filter");
       if (nameEl) {
         name = nameEl.text?.trim() || "";
-        // Cara lebih selamat untuk memanggil getHref
         if (typeof nameEl.getHref === 'function') {
             link = nameEl.getHref() || "";
         } else {
-            // Jika getHref bukan fungsi, ia mungkin properti
             link = nameEl.getHref || ""; 
-            console.warn("nameEl.getHref is not a function, using as property:", name, link);
+            console.warn(`nameEl.getHref for '${name}' is not a function, using as property.`);
         }
       }
 
-      // Cuba selector imej yang paling mungkin
-      // Pastikan imageEl wujud sebelum cuba dapatkan src
       const imageEl = el.selectFirst("img, .cover img, .novel-cover img");
       if (imageEl) {
-        // Cara lebih selamat untuk memanggil getSrc
         if (typeof imageEl.getSrc === 'function') {
             imageUrl = imageEl.getSrc() || "";
         } else {
-            // Jika getSrc bukan fungsi, ia mungkin properti atau data-src
             imageUrl = imageEl.getSrc || imageEl.getAttribute("data-src") || imageEl.getAttribute("srcset") || "";
-            console.warn("imageEl.getSrc is not a function, using as property/attribute:", name, imageUrl);
+            console.warn(`imageEl.getSrc for '${name}' is not a function, using as property/attribute.`);
         }
       }
 
-      // Periksa jika URL imej adalah relatif dan jadikan ia mutlak
       if (imageUrl && imageUrl.startsWith("/")) {
         imageUrl = `${this.source.baseUrl}${imageUrl}`;
       }
       
-      // Pastikan link adalah URL penuh
       const fullLink = link.startsWith("http") ? link : `${this.source.baseUrl}${link}`;
 
       console.log(`Parsed Item: Name='${name}', Link='${fullLink}', ImageURL='${imageUrl}'`);
 
-      if (name && link) { // Hanya tambah jika ada nama dan link
+      if (name && link) {
         novels.push({ name, link: fullLink, imageUrl });
       } else {
           console.warn("Skipping item due to missing name or link:", el.outerHtml);
       }
     }
     
-    // Selector untuk next page
     const hasNextPage = doc.selectFirst("ul.pagination > li.active + li, .pagination .next, .next-page") !== null;
     console.log("Has next page:", hasNextPage);
     console.log("Total novels found:", novels.length);
@@ -102,14 +93,15 @@ class DefaultExtension extends MProvider {
     return { list: novels, hasNextPage };
   }
 
-  // toStatus, getPopular, getLatestUpdates, search, getDetail, getHtmlContent, cleanHtmlContent, getFilterList, getSourcePreferences, parseDate
-  // Kekalkan fungsi-fungsi ini seperti dalam kod versi 1.0.7 yang saya berikan sebelumnya.
-  // Pastikan anda menambah 'headers' pada setiap panggilan Client().get()
-  // dan juga letakkan Cloudflare check dalam fungsi-fungsi async ini.
-  // Saya tidak akan sertakan kesemuanya di sini untuk menjimatkan ruang,
-  // tetapi sila pastikan anda menyalinnya dari versi 1.0.7.
+  // Fungsi pembantu untuk menukar teks status ke kod status numerik
+  toStatus(statusText) {
+    if (statusText.includes("ongoing")) return 0;
+    else if (statusText.includes("completed")) return 1;
+    else if (statusText.includes("hiatus")) return 2; 
+    else if (statusText.includes("dropped")) return 3; 
+    else return 5;
+  }
 
-  // Contoh untuk getPopular (lain-lain fungsi async HTTP serupa)
   async getPopular(page) {
     console.log("--- DEBUG: getPopular Called (Version 1.0.8) ---");
     try {
@@ -124,7 +116,6 @@ class DefaultExtension extends MProvider {
             }
         });
         console.log("HTTP Status:", res.status);
-        // Penting: Cloudflare check di sini juga
         if (res.body.includes("Just a moment") || res.body.includes("Enable JavaScript and cookies to continue")) {
             console.error("Cloudflare challenge detected in getPopular!");
             return { list: [], hasNextPage: false }; 
@@ -136,10 +127,56 @@ class DefaultExtension extends MProvider {
     }
   }
 
-  // ... (fungsi-fungsi lain seperti getLatestUpdates, search, getDetail, getHtmlContent, cleanHtmlContent, toStatus, getFilterList, getSourcePreferences, parseDate)
-  // Pastikan kesemuanya ada dalam kod penuh anda dan disesuaikan dengan logging dan headers.
+  async getLatestUpdates(page) {
+    console.log("--- DEBUG: getLatestUpdates Called (Version 1.0.8) ---");
+    try {
+        const url = `${this.source.baseUrl}/latest-release?page=${page}`;
+        console.log("Requesting URL:", url);
+        const res = await new Client().get(url, {
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "Referer": this.source.baseUrl,
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5"
+            }
+        });
+        console.log("HTTP Status:", res.status);
+        if (res.body.includes("Just a moment") || res.body.includes("Enable JavaScript and cookies to continue")) {
+            console.error("Cloudflare challenge detected in getLatestUpdates!");
+            return { list: [], hasNextPage: false }; 
+        }
+        return this.mangaListFromPage(res);
+    } catch (error) {
+        console.error("getLatestUpdates: Error during HTTP request:", error);
+        return { list: [], hasNextPage: false };
+    }
+  }
 
-  // Contoh getDetail - perlukan semakan getSrc() dan getHref() juga
+  async search(query, page, filters) {
+    console.log("--- DEBUG: search Called (Version 1.0.8) ---");
+    try {
+        const url = `${this.source.baseUrl}/search?keyword=${encodeURIComponent(query)}&page=${page}`;
+        console.log("Requesting URL:", url);
+        const res = await new Client().get(url, {
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "Referer": this.source.baseUrl,
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5"
+            }
+        });
+        console.log("HTTP Status:", res.status);
+        if (res.body.includes("Just a moment") || res.body.includes("Enable JavaScript and cookies to continue")) {
+            console.error("Cloudflare challenge detected in search!");
+            return { list: [], hasNextPage: false }; 
+        }
+        return this.mangaListFromPage(res);
+    } catch (error) {
+        console.error("search: Error during HTTP request:", error);
+        return { list: [], hasNextPage: false };
+    }
+  }
+
   async getDetail(url) {
     console.log("--- DEBUG: getDetail Called (Version 1.0.8) ---");
     try {
@@ -147,7 +184,7 @@ class DefaultExtension extends MProvider {
         const res = await client.get(url, {
             headers: {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                "Referer": url,
+                "Referer": url, 
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
                 "Accept-Language": "en-US,en;q=0.5"
             }
@@ -221,5 +258,68 @@ class DefaultExtension extends MProvider {
     }
   }
 
-  // ... (fungsi-fungsi lain)
+  async getHtmlContent(name, url) {
+    console.log("--- DEBUG: getHtmlContent Called (Version 1.0.8) ---");
+    try {
+        const res = await new Client().get(url, {
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "Referer": url,
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5"
+            }
+        });
+        console.log("HTTP Status:", res.status);
+        if (res.body.includes("Just a moment") || res.body.includes("Enable JavaScript and cookies to continue")) {
+            console.error("Cloudflare challenge detected in getHtmlContent!");
+            return "";
+        }
+        return this.cleanHtmlContent(res.body);
+    } catch (error) {
+        console.error("getHtmlContent: Error:", error);
+        return "";
+    }
+  }
+
+  async cleanHtmlContent(html) {
+    console.log("--- DEBUG: cleanHtmlContent Called (Version 1.0.8) ---");
+    try {
+        const doc = new Document(html);
+        const title = doc.selectFirst("h2, .chapter-title, h3")?.text?.trim() || ""; 
+        const content = doc.selectFirst(".chapter-c, .chapter-content, .content")?.innerHtml || ""; 
+        console.log("Cleaned content title:", title);
+        return `<h2>${title}</h2><hr><br>${content}`;
+    } catch (error) {
+        console.error("cleanHtmlContent: Error:", error);
+        return "";
+    }
+  }
+
+  getFilterList() {
+    console.log("getFilterList: Called");
+    return []; 
+  }
+
+  getSourcePreferences() {
+    console.log("getSourcePreferences: Called");
+    return {}; 
+  }
+
+  // Fungsi parseDate dari Wordrain69 - tidak digunakan secara langsung untuk bab NovelFull kerana tiada tarikh mudah
+  parseDate(date) {
+    const months = {
+      "january": "01", "february": "02", "march": "03", "april": "04", "may": "05", "june": "06",
+      "july": "07", "august": "08", "september": "09", "october": "10", "november": "11", "december": "12"
+    };
+    date = date.toLowerCase().replace(",", "").split(" ");
+
+    if (!(date[0] in months)) {
+      return String(new Date().valueOf())
+    }
+
+    date[0] = months[date[0]];
+    date = [date[2], date[0], date[1]];
+    date = date.join("-");
+    return String(new Date(date).valueOf());
+  }
 }
