@@ -1,118 +1,149 @@
 const mangayomiSources = [{
-  "name": "ReadFullNovel",
+  "name": "Novelfull",
   "lang": "en",
-  "baseUrl": "https://readfullnovel.com",
+  "baseUrl": "https://novelfull.com",
   "apiUrl": "",
-  "iconUrl": "https://readfullnovel.com/favicon.ico",
+  "iconUrl": "https://novelfull.com/favicon.ico",
   "typeSource": "single",
-  "itemType": 2,
-  "version": "1.0.0",
+  "itemType": 2, // Novel type
+  "version": "1.0.6", // PASTIKAN VERSION INI DIINCREMENTKAN!
   "dateFormat": "",
   "dateFormatLocale": "",
-  "pkgPath": "novel/src/en/readfullnovel.js",
+  "pkgPath": "novel/src/en/novelfull.js", // Sahkan laluan ini
   "isNsfw": false,
-  "hasCloudflare": true
+  "hasCloudflare": false // DISETKAN KEPADA FALSE
 }];
 
 class DefaultExtension extends MProvider {
+
+  getHeaders(url) {
+    return {};
+  }
+
+  // Fungsi ini kini hanya untuk debugging. Ia tidak akan parse apa-apa.
   mangaListFromPage(res) {
-    const doc = new Document(res.body);
-    const novels = [];
-    const elements = doc.select(".list-truyen .row");
-
-    for (const el of elements) {
-      const name = el.selectFirst("h3.truyen-title > a")?.text.trim();
-      const link = el.selectFirst("h3.truyen-title > a")?.getHref();
-
-      const imageEl = el.selectFirst("img");
-      let imageUrl = imageEl?.getAttribute("data-src") || imageEl?.getSrc();
-      if (imageUrl?.startsWith("/")) {
-        imageUrl = "https://readfullnovel.com" + imageUrl;
-      }
-
-      if (name && link) {
-        novels.push({ name, link: "https://readfullnovel.com" + link, imageUrl });
-      }
-    }
-
-    const hasNextPage = doc.selectFirst("ul.pagination > li.active + li") !== null;
-    return { list: novels, hasNextPage };
+    console.log("--- DEBUG: mangaListFromPage Called (No Cloudflare Check) ---");
+    console.log("HTTP Response Status:", res.status);
+    console.log("Response Body Length:", res.body.length);
+    console.log("First 1000 characters of Response Body:");
+    console.log(res.body.substring(0, 1000)); 
+    
+    // Kita tidak akan parse apa-apa di sini. Hanya kembali senarai kosong.
+    return { list: [], hasNextPage: false };
   }
 
   async getPopular(page) {
-    const res = await new Client().get(`https://readfullnovel.com/most-popular?page=${page}`);
-    return this.mangaListFromPage(res);
+    console.log("--- DEBUG: getPopular Called (No Cloudflare Check) ---");
+    try {
+        const url = `${this.source.baseUrl}/most-popular?page=${page}`;
+        console.log("Requesting URL:", url);
+        const res = await new Client().get(url, {
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "Referer": this.source.baseUrl,
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5"
+            }
+        });
+        // Tiada Cloudflare check di sini
+        return this.mangaListFromPage(res); 
+    } catch (error) {
+        console.error("getPopular: Error during HTTP request:", error);
+        return { list: [], hasNextPage: false };
+    }
   }
 
   async getLatestUpdates(page) {
-    const res = await new Client().get(`https://readfullnovel.com/latest-release?page=${page}`);
-    return this.mangaListFromPage(res);
+    console.log("--- DEBUG: getLatestUpdates Called (No Cloudflare Check) ---");
+    try {
+        const url = `${this.source.baseUrl}/latest-release?page=${page}`;
+        console.log("Requesting URL:", url);
+        const res = await new Client().get(url, {
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "Referer": this.source.baseUrl,
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5"
+            }
+        });
+        return this.mangaListFromPage(res);
+    } catch (error) {
+        console.error("getLatestUpdates: Error during HTTP request:", error);
+        return { list: [], hasNextPage: false };
+    }
   }
 
   async search(query, page, filters) {
-    const res = await new Client().get(`https://readfullnovel.com/search?keyword=${encodeURIComponent(query)}&page=${page}`);
-    return this.mangaListFromPage(res);
+    console.log("--- DEBUG: search Called (No Cloudflare Check) ---");
+    try {
+        const url = `${this.source.baseUrl}/search?keyword=${encodeURIComponent(query)}&page=${page}`;
+        console.log("Requesting URL:", url);
+        const res = await new Client().get(url, {
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "Referer": this.source.baseUrl,
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5"
+            }
+        });
+        return this.mangaListFromPage(res);
+    } catch (error) {
+        console.error("search: Error during HTTP request:", error);
+        return { list: [], hasNextPage: false };
+    }
+  }
+
+  // Fungsi-fungsi lain di bawah ini kekal tidak berubah kerana tidak dipanggil untuk senarai utama.
+
+  toStatus(statusText) {
+    if (statusText.includes("ongoing")) return 0;
+    else if (statusText.includes("completed")) return 1;
+    else if (statusText.includes("hiatus")) return 2;
+    else if (statusText.includes("dropped")) return 3;
+    else return 5;
   }
 
   async getDetail(url) {
-    const client = new Client();
-    const res = await client.get(url);
-    const doc = new Document(res.body);
-
-    const imageUrl = doc.selectFirst(".book img")?.getSrc();
-    const description = doc.selectFirst(".desc-text")?.text.trim();
-    const author = doc.selectFirst("a[property='author']")?.text.trim();
-    const genre = doc.select("a[itemprop='genre']").map((el) => el.text.trim());
-    const statusText = doc.selectFirst(".info > div")?.text.toLowerCase();
-    const status = statusText?.includes("ongoing") ? 0 : statusText?.includes("completed") ? 1 : 2;
-
-    const novelId = doc.selectFirst("#rating")?.getAttribute("data-novel-id");
-    const chapters = [];
-
-    if (novelId) {
-      const chapterRes = await client.post("https://readfullnovel.com/ajax/chapter-archive", {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          "Referer": url,
-        },
-        body: `novelId=${novelId}`
-      });
-
-      const chapterDoc = new Document(chapterRes.body);
-      const chapterElements = chapterDoc.select("ul.list-chapter > li > a");
-      for (const el of chapterElements) {
-        const name = el.text.trim();
-        const link = el.getHref();
-        chapters.push({
-          name,
-          url: "https://readfullnovel.com" + link,
-          dateUpload: null,
-          scanlator: null
+    console.log("--- DEBUG: getDetail Called (No Cloudflare Check) ---");
+    try {
+        const client = new Client();
+        const res = await client.get(url, {
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "Referer": this.source.baseUrl,
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5"
+            }
         });
-      }
+        // Tiada Cloudflare check di sini
+        return { imageUrl: "", description: "", genre: [], author: "", artist: "", status: 2, chapters: [] };
+    } catch (error) {
+        console.error("getDetail: Error:", error);
+        return { imageUrl: "", description: "", genre: [], author: "", artist: "", status: 2, chapters: [] };
     }
-
-    return {
-      imageUrl,
-      description,
-      genre,
-      author,
-      artist: "",
-      status,
-      chapters: chapters.reverse()
-    };
   }
 
   async getHtmlContent(name, url) {
-    const res = await new Client().get(url);
-    return this.cleanHtmlContent(res.body);
+    console.log("--- DEBUG: getHtmlContent Called (No Cloudflare Check) ---");
+    try {
+        const res = await new Client().get(url, {
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "Referer": this.source.baseUrl,
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5"
+            }
+        });
+        // Tiada Cloudflare check di sini
+        return "";
+    } catch (error) {
+        console.error("getHtmlContent: Error:", error);
+        return "";
+    }
   }
 
   async cleanHtmlContent(html) {
-    const doc = new Document(html);
-    const title = doc.selectFirst("h2")?.text.trim() || "";
-    const content = doc.selectFirst(".chapter-c")?.innerHtml;
-    return `<h2>${title}</h2><hr><br>${content}`;
+    return "";
   }
 
   getFilterList() {
@@ -121,5 +152,9 @@ class DefaultExtension extends MProvider {
 
   getSourcePreferences() {
     return {};
+  }
+
+  parseDate(date) {
+    return String(new Date().valueOf());
   }
 }
