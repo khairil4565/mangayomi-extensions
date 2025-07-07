@@ -6,10 +6,10 @@ const mangayomiSources = [{
   "iconUrl": "https://novelfull.com/favicon.ico",
   "typeSource": "single",
   "itemType": 2, // Novel type
-  "version": "1.0.1", // Incremented for changes
+  "version": "1.0.2", // Incremented to force reload
   "dateFormat": "",
   "dateFormatLocale": "",
-  "pkgPath": "novel/src/en/novelfull.js",
+  "pkgPath": "novel/src/en/novelfull.js", // Verify this path
   "isNsfw": false,
   "hasCloudflare": true
 }];
@@ -17,23 +17,23 @@ const mangayomiSources = [{
 class DefaultExtension extends MProvider {
   mangaListFromPage(res) {
     try {
-      console.log("Response body (first 500 chars):", res.body.substring(0, 500));
+      console.log("mangaListFromPage: Response body (first 500 chars):", res.body.substring(0, 500));
       const doc = new Document(res.body);
       const novels = [];
       const elements = doc.select(".list-truyen .row, .novel-list .item, .col-truyen-main .row"); // Fallback selectors
-      console.log("Found novel elements:", elements.length);
+      console.log("mangaListFromPage: Found elements:", elements.length);
 
       for (const el of elements) {
         const nameEl = el.selectFirst("h3.truyen-title > a, .novel-title a, .title a");
-        const name = nameEl?.text?.trim();
-        const link = nameEl?.getHref();
+        const name = nameEl?.text?.trim() || "";
+        const link = nameEl?.getHref() || "";
 
         const imageEl = el.selectFirst("img");
         let imageUrl = imageEl?.getSrc() || imageEl?.getAttribute("data-src") || imageEl?.getAttribute("srcset") || "";
         if (imageUrl && imageUrl.startsWith("/")) {
           imageUrl = `https://novelfull.com${imageUrl}`;
         }
-        console.log("Parsed novel:", { name, link, imageUrl });
+        console.log("mangaListFromPage: Parsed novel:", { name, link, imageUrl });
 
         if (name && link) {
           novels.push({ name, link: `https://novelfull.com${link}`, imageUrl });
@@ -41,72 +41,84 @@ class DefaultExtension extends MProvider {
       }
 
       const hasNextPage = doc.selectFirst("ul.pagination > li.active + li, .pagination .next") !== null;
-      console.log("Has next page:", hasNextPage);
+      console.log("mangaListFromPage: Has next page:", hasNextPage);
       return { list: novels, hasNextPage };
     } catch (error) {
-      console.error("Error in mangaListFromPage:", error);
+      console.error("mangaListFromPage: Error:", error);
       return { list: [], hasNextPage: false };
     }
   }
 
   async getPopular(page) {
     try {
+      console.log("getPopular: Fetching page:", page);
       const res = await new Client().get(`https://novelfull.com/most-popular?page=${page}`, {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-          "Referer": "https://novelfull.com"
+          "Referer": "https://novelfull.com",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.5"
         }
       });
-      console.log("getPopular status:", res.status);
+      console.log("getPopular: HTTP status:", res.status);
       return this.mangaListFromPage(res);
     } catch (error) {
-      console.error("Error in getPopular:", error);
+      console.error("getPopular: Error:", error);
       return { list: [], hasNextPage: false };
     }
   }
 
   async getLatestUpdates(page) {
     try {
+      console.log("getLatestUpdates: Fetching page:", page);
       const res = await new Client().get(`https://novelfull.com/latest-release?page=${page}`, {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-          "Referer": "https://novelfull.com"
+          "Referer": "https://novelfull.com",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.5"
         }
       });
-      console.log("getLatestUpdates status:", res.status);
+      console.log("getLatestUpdates: HTTP status:", res.status);
       return this.mangaListFromPage(res);
     } catch (error) {
-      console.error("Error in getLatestUpdates:", error);
+      console.error("getLatestUpdates: Error:", error);
       return { list: [], hasNextPage: false };
     }
   }
 
   async search(query, page, filters) {
     try {
+      console.log("search: Query:", query, "Page:", page);
       const res = await new Client().get(`https://novelfull.com/search?keyword=${encodeURIComponent(query)}&page=${page}`, {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-          "Referer": "https://novelfull.com"
+          "Referer": "https://novelfull.com",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.5"
         }
       });
-      console.log("Search status:", res.status);
+      console.log("search: HTTP status:", res.status);
       return this.mangaListFromPage(res);
     } catch (error) {
-      console.error("Error in search:", error);
+      console.error("search: Error:", error);
       return { list: [], hasNextPage: false };
     }
   }
 
   async getDetail(url) {
     try {
+      console.log("getDetail: Fetching URL:", url);
       const client = new Client();
       const res = await client.get(url, {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-          "Referer": "https://novelfull.com"
+          "Referer": "https://novelfull.com",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.5"
         }
       });
-      console.log("getDetail status:", res.status);
+      console.log("getDetail: HTTP status:", res.status);
       const doc = new Document(res.body);
 
       const imageEl = doc.selectFirst(".book img, .novel-cover img, .cover-image img");
@@ -114,21 +126,21 @@ class DefaultExtension extends MProvider {
       if (imageUrl && imageUrl.startsWith("/")) {
         imageUrl = `https://novelfull.com${imageUrl}`;
       }
-      console.log("Detail imageUrl:", imageUrl);
+      console.log("getDetail: imageUrl:", imageUrl);
 
       const description = doc.selectFirst(".desc-text, .desc, .novel-description")?.text?.trim() || "";
       const author = doc.selectFirst("a[property='author'], .author a")?.text?.trim() || "";
       const genre = doc.select("a[itemprop='genre'], .genre a").map((el) => el.text?.trim()).filter(g => g);
       const statusText = doc.selectFirst(".info > div, .status")?.text?.toLowerCase() || "";
       const status = statusText.includes("ongoing") ? 0 : statusText.includes("completed") ? 1 : 2;
-      console.log("Detail parsed:", { imageUrl, description, author, genre, status });
+      console.log("getDetail: Parsed:", { imageUrl, description, author, genre, status });
 
       const chapters = [];
       const chapterElements = doc.select(".list-chapter > li");
-      console.log("Found chapters:", chapterElements.length);
+      console.log("getDetail: Found chapters:", chapterElements.length);
       for (const el of chapterElements) {
-        const name = el.selectFirst("a")?.text?.trim();
-        const link = el.selectFirst("a")?.getHref();
+        const name = el.selectFirst("a")?.text?.trim() || "";
+        const link = el.selectFirst("a")?.getHref() || "";
         if (name && link) {
           chapters.push({
             name,
@@ -139,7 +151,7 @@ class DefaultExtension extends MProvider {
         }
       }
 
- bans     return {
+      return {
         imageUrl,
         description,
         genre,
@@ -149,7 +161,7 @@ class DefaultExtension extends MProvider {
         chapters
       };
     } catch (error) {
-      console.error("Error in getDetail:", error);
+      console.error("getDetail: Error:", error);
       return {
         imageUrl: "",
         description: "",
@@ -164,38 +176,44 @@ class DefaultExtension extends MProvider {
 
   async getHtmlContent(name, url) {
     try {
+      console.log("getHtmlContent: Fetching URL:", url);
       const res = await new Client().get(url, {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-          "Referer": "https://novelfull.com"
+          "Referer": "https://novelfull.com",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.5"
         }
       });
-      console.log("getHtmlContent status:", res.status);
+      console.log("getHtmlContent: HTTP status:", res.status);
       return this.cleanHtmlContent(res.body);
     } catch (error) {
-      console.error("Error in getHtmlContent:", error);
+      console.error("getHtmlContent: Error:", error);
       return "";
     }
   }
 
   async cleanHtmlContent(html) {
     try {
+      console.log("cleanHtmlContent: Processing HTML");
       const doc = new Document(html);
       const title = doc.selectFirst("h2, .chapter-title")?.text?.trim() || "";
       const content = doc.selectFirst(".chapter-c, .chapter-content")?.innerHtml || "";
-      console.log("cleanHtmlContent title:", title);
+      console.log("cleanHtmlContent: Title:", title);
       return `<h2>${title}</h2><hr><br>${content}`;
     } catch (error) {
-      console.error("Error in cleanHtmlContent:", error);
+      console.error("cleanHtmlContent: Error:", error);
       return "";
     }
   }
 
   getFilterList() {
+    console.log("getFilterList: Called");
     return [];
   }
 
   getSourcePreferences() {
+    console.log("getSourcePreferences: Called");
     return {};
   }
 }
