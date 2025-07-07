@@ -6,7 +6,7 @@ const mangayomiSources = [{
   "iconUrl": "https://readnovelfull.com/favicon.ico",
   "typeSource": "single",
   "itemType": 2,
-  "version": "1.0.2",
+  "version": "1.0.3",
   "dateFormat": "",
   "dateFormatLocale": "",
   "pkgPath": "novel/src/en/readnovelfull.js",
@@ -18,7 +18,7 @@ class DefaultExtension extends MProvider {
   mangaListFromPage(res) {
     const doc = new Document(res.body);
     const novels = [];
-    const elements = doc.select("div.list-novel .row");
+    const elements = doc.select("div.list-novel .row").toArray();
 
     for (const el of elements) {
       const titleEl = el.selectFirst("h3.novel-title > a");
@@ -29,7 +29,7 @@ class DefaultExtension extends MProvider {
       const name = titleEl.getText().trim();
       const link = "https://readnovelfull.com" + titleEl.getHref();
       const imgSrc = imgEl.hasAttr("data-src") ? imgEl.getAttribute("data-src") : imgEl.getSrc();
-      const imageUrl = imgSrc?.startsWith("http") ? imgSrc : "https://readnovelfull.com" + imgSrc;
+      const imageUrl = imgSrc.startsWith("http") ? imgSrc : "https://readnovelfull.com" + imgSrc;
 
       novels.push({ name, link, imageUrl });
     }
@@ -61,8 +61,7 @@ class DefaultExtension extends MProvider {
     const imageUrl = doc.selectFirst(".book img")?.getSrc();
     const description = doc.selectFirst(".desc-text")?.getText().trim();
     const author = doc.selectFirst("a[property='author']")?.getText().trim();
-    const genreEls = doc.select("a[itemprop='genre']").toArray();
-    const genre = genreEls.map((el) => el.getText().trim());
+    const genre = doc.select("a[itemprop='genre']").toArray().map(el => el.getText().trim());
     const statusText = doc.selectFirst(".info > div")?.getText().toLowerCase();
     const status = statusText?.includes("ongoing") ? 0 : statusText?.includes("completed") ? 1 : 2;
 
