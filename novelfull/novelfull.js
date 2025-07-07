@@ -23,6 +23,7 @@ class DefaultExtension extends MProvider {
     for (const el of elements) {
       const name = el.selectFirst("h3.truyen-title > a")?.text.trim();
       const link = el.selectFirst("h3.truyen-title > a")?.getHref();
+
       const imageEl = el.selectFirst("img");
       let imageUrl = imageEl?.getAttribute("data-src") || imageEl?.getSrc();
       if (imageUrl?.startsWith("/")) {
